@@ -1,0 +1,13 @@
+# --- Pastas Específicas do seu Projeto ---
+Bases/
+venv/
+
+# --- Padrões do R (Essenciais) ---
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# --- Arquivos de Sistema (Opcional, mas recomendado) ---
+.DS_Store
+Thumbs.db
