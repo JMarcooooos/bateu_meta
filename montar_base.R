@@ -3,9 +3,7 @@
 library(tidyverse)
 library(readxl)
 
-# Taxa de Aprovação []----
-
-# Bateu a Meta em 2023 [V] ----
+# Bateu a Meta em 2023 (var. resposta) [V] ----
 
 bateu_meta_23 <- read_excel("Bases/METAS E IDEB 2023 - Escolas - Anos Finais e Ensino Médio - VERSÃO FINAL.xlsx",skip = 6) %>%
   select(`Código da Escola`,`Atingiu a Meta\r\nAnos Finais`,`Atingiu a Meta\r\nEnsino Médio`) %>%
@@ -13,7 +11,89 @@ bateu_meta_23 <- read_excel("Bases/METAS E IDEB 2023 - Escolas - Anos Finais e E
   mutate(`Atingiu a Meta\r\nAnos Finais` = case_when(`Atingiu a Meta\r\nAnos Finais` == '-' ~ NA_character_, TRUE ~ `Atingiu a Meta\r\nAnos Finais`),
          `Atingiu a Meta\r\nEnsino Médio` = case_when(`Atingiu a Meta\r\nEnsino Médio` == '-' ~ NA_character_, TRUE ~ `Atingiu a Meta\r\nEnsino Médio`))
 
-# Desafio menor que 0.4 [] ----
+# Desafio menor que 0.4 (meta_23 - ideb_21) [V] ----
+
+# IDEB 2021
+
+ideb_21_af <- read_excel("Bases/divulgacao_anos_finais_escolas_2023.xlsx",skip = 9) %>% 
+  select("SG_UF","ID_ESCOLA","NO_ESCOLA","REDE","VL_OBSERVADO_2021") %>%
+  filter(SG_UF == 'GO',
+         REDE == 'Estadual') %>%
+  mutate(VL_OBSERVADO_2021 = as.numeric(case_when(VL_OBSERVADO_2021 == '-' ~ NA_character_, TRUE ~ VL_OBSERVADO_2021)))
+
+ideb_21_em <- read_excel("Bases/divulgacao_ensino_medio_escolas_2023.xlsx",skip = 9) %>% 
+  select("SG_UF","ID_ESCOLA","NO_ESCOLA","REDE","VL_OBSERVADO_2021") %>%
+  filter(SG_UF == 'GO',
+         REDE == 'Estadual') %>%
+  mutate(VL_OBSERVADO_2021 = as.numeric(case_when(VL_OBSERVADO_2021 == '-' ~ NA_character_, TRUE ~ VL_OBSERVADO_2021)))
+
+# Meta 2023
+desafios <- read_excel("Bases/METAS E IDEB 2023 - Escolas - Anos Finais e Ensino Médio - VERSÃO FINAL.xlsx", skip = 6)
+
+desafios <- desafios %>%
+  select(`Código da Escola`, `Meta\r\nAnos Finais 2023`,`Meta\r\nEnsino Médio 2023`) %>%
+  mutate(`Meta\r\nAnos Finais 2023` = as.numeric(case_when(`Meta\r\nAnos Finais 2023` == '-' ~ NA_character_, TRUE ~ `Meta\r\nAnos Finais 2023`)),
+         `Meta\r\nEnsino Médio 2023` = as.numeric(case_when(`Meta\r\nEnsino Médio 2023` == '-' ~ NA_character_, TRUE ~ `Meta\r\nEnsino Médio 2023`))) 
+
+# Juntando
+desafios_2023 <- desafios %>%
+  left_join(ideb_21_af %>% select(ID_ESCOLA,VL_OBSERVADO_2021), by=c("Código da Escola" = "ID_ESCOLA")) %>%
+  left_join(ideb_21_em %>% select(ID_ESCOLA,VL_OBSERVADO_2021), by=c("Código da Escola" = "ID_ESCOLA")) %>%
+  rename(IDEB_21_AF = VL_OBSERVADO_2021.x,
+         IDEB_21_EM = VL_OBSERVADO_2021.y) %>%
+  janitor::remove_empty() %>%
+  mutate(Desafio_23_AF = `Meta\r\nAnos Finais 2023` - IDEB_21_AF,
+         Desafio_23_EM = `Meta\r\nEnsino Médio 2023` - IDEB_21_EM) %>%
+  mutate(Desafio_AF_menor = case_when(Desafio_23_AF >= 0.4 ~ 'NAO',
+                                      Desafio_23_AF < 0.4 ~ 'SIM',
+                                      TRUE ~ NA_character_),
+         Desafio_EM_menor = case_when( Desafio_23_EM >= 0.4  ~ 'NAO',
+                                       Desafio_23_EM < 0.4  ~ 'SIM',
+                                       TRUE ~ NA_character_))
+
+rm(list=setdiff(ls(),c("bateu_meta_23","desafios_2023")))
+
+# Desafio menor que 0.4 (meta_25 - ideb_23) [V] ----
+
+# IDEB 2023
+
+ideb_23_af <- read_excel("Bases/divulgacao_anos_finais_escolas_2023.xlsx",skip = 9) %>% 
+  select("SG_UF","ID_ESCOLA","NO_ESCOLA","REDE","VL_OBSERVADO_2023") %>%
+  filter(SG_UF == 'GO',
+         REDE == 'Estadual') %>%
+  mutate(VL_OBSERVADO_2023 = as.numeric(case_when(VL_OBSERVADO_2023 == '-' ~ NA_character_, TRUE ~ VL_OBSERVADO_2023)))
+
+ideb_23_em <- read_excel("Bases/divulgacao_ensino_medio_escolas_2023.xlsx",skip = 9) %>% 
+  select("SG_UF","ID_ESCOLA","NO_ESCOLA","REDE","VL_OBSERVADO_2023") %>%
+  filter(SG_UF == 'GO',
+         REDE == 'Estadual') %>%
+  mutate(VL_OBSERVADO_2023 = as.numeric(case_when(VL_OBSERVADO_2023 == '-' ~ NA_character_, TRUE ~ VL_OBSERVADO_2023)))
+
+# Meta 2025
+desafios <- read_excel("Bases/Metas para Ideb 2025 - Versão Final.xlsx", skip = 8)
+
+desafios <- desafios %>%
+  select(Cod_Inep, `Meta 2025\r\nAnos Finais`,`Meta 2025\r\nEnsino Médio`) %>%
+  mutate(`Meta 2025\r\nAnos Finais` = as.numeric(case_when(`Meta 2025\r\nAnos Finais` == '-' ~ NA_character_, TRUE ~ `Meta 2025\r\nAnos Finais`)),
+         `Meta 2025\r\nEnsino Médio` = as.numeric(case_when(`Meta 2025\r\nEnsino Médio` == '-' ~ NA_character_, TRUE ~ `Meta 2025\r\nEnsino Médio`))) 
+
+# Juntando
+desafios_2025 <- desafios %>%
+  left_join(ideb_23_af %>% select(ID_ESCOLA,VL_OBSERVADO_2023), by=c("Cod_Inep" = "ID_ESCOLA")) %>%
+  left_join(ideb_23_em %>% select(ID_ESCOLA,VL_OBSERVADO_2023), by=c("Cod_Inep" = "ID_ESCOLA")) %>%
+  rename(IDEB_23_AF = VL_OBSERVADO_2023.x,
+         IDEB_23_EM = VL_OBSERVADO_2023.y) %>%
+  janitor::remove_empty() %>%
+  mutate(Desafio_25_AF = `Meta 2025\r\nAnos Finais` - IDEB_23_AF,
+         Desafio_25_EM = `Meta 2025\r\nEnsino Médio` - IDEB_23_EM) %>%
+  mutate(Desafio_AF_menor = case_when(Desafio_25_AF >= 0.4 ~ 'NAO',
+                                      Desafio_25_AF < 0.4 ~ 'SIM',
+                                      TRUE ~ NA_character_),
+         Desafio_EM_menor = case_when( Desafio_25_EM >= 0.4  ~ 'NAO',
+                                       Desafio_25_EM < 0.4  ~ 'SIM',
+                                       TRUE ~ NA_character_))
+
+rm(list=setdiff(ls(),c("bateu_meta_23","desafios_2023","desafios_2025")))
 
 # Crescimento no SAEGO  (2022-2023) [V] ----
 
@@ -144,7 +224,7 @@ crescimento_20222023 <- list(saego_2022e2023_EF_LP,
 
 names(crescimento_20222023) <- c("EF_LP","EF_MT","EM_LP","EM_MT")
 
-rm(list=setdiff(ls(),"crescimento_20222023","bateu_meta_23"))
+rm(list=setdiff(ls(),c("bateu_meta_23","desafios_2023","desafios_2025","crescimento_20222023")))
 
 # Crescimento no SAEGO  (2024-2025) [V] ----
 
@@ -286,7 +366,8 @@ crescimento_20242025 <- list(saego_2024e2025_EF_LP,
 
 names(crescimento_20242025) <- c("EF_LP","EF_MT","EM_LP","EM_MT")
 
-rm(list=setdiff(ls(),c("crescimento_20222023","crescimento_20242025","bateu_meta_23")))
 
+rm(list=setdiff(ls(),c("bateu_meta_23","desafios_2023","desafios_2025","crescimento_20222023","crescimento_20242025")))
 
 # Crescimento Médio maior no IDEB []----
+# Taxa de Aprovação []----
