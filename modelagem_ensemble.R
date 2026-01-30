@@ -250,3 +250,5 @@ table(resultado_final_em$.pred_class)
 resultado_final_ef
 resultado_final_em
 
+save.image("model_completo.RData")
+
