@@ -13,14 +13,14 @@
 
 Fazer isso para Ensino Fundamental (AF) e Ensino Médio
 
-- [ ] Construir o Workflow
-- [ ] Dividir Treino/Validação
-- [ ] Treinar Modelo
-- [ ] Tunar Parâmetros com Validação
-- [ ] Fazer a Previsão
+- [x] Construir o Workflow
+- [x] Dividir Treino/Validação
+- [x] Treinar Modelo
+- [x] Tunar Parâmetros com Validação
+- [x] Fazer a Previsão
 
 ## Resultados
 
-- [ ] Exportar Base com Escolas que o modelo prevê que vá bater a meta
+- [x] Exportar Base com Escolas que o modelo prevê que vá bater a meta
 - [ ] Verificar com Gerência os resultados
 - [ ] Ajuste fino humano
