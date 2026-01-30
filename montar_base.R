@@ -3,7 +3,7 @@
 library(tidyverse)
 library(readxl)
 
-# Bateu a Meta em 2023 (var. resposta) [V] ----
+# Bateu a Meta em 2023 (var. resposta) [V] (treino) ----
 
 bateu_meta_23 <- read_excel("Bases/METAS E IDEB 2023 - Escolas - Anos Finais e Ensino Médio - VERSÃO FINAL.xlsx",skip = 6) %>%
   select(`Código da Escola`,`Atingiu a Meta\r\nAnos Finais`,`Atingiu a Meta\r\nEnsino Médio`) %>%
@@ -11,7 +11,7 @@ bateu_meta_23 <- read_excel("Bases/METAS E IDEB 2023 - Escolas - Anos Finais e E
   mutate(`Atingiu a Meta\r\nAnos Finais` = case_when(`Atingiu a Meta\r\nAnos Finais` == '-' ~ NA_character_, TRUE ~ `Atingiu a Meta\r\nAnos Finais`),
          `Atingiu a Meta\r\nEnsino Médio` = case_when(`Atingiu a Meta\r\nEnsino Médio` == '-' ~ NA_character_, TRUE ~ `Atingiu a Meta\r\nEnsino Médio`))
 
-# Desafio menor que 0.4 (meta_23 - ideb_21) [V] ----
+# Desafio menor que 0.4 (meta_23 - ideb_21) [V] (treino) ----
 
 # IDEB 2021
 
@@ -95,7 +95,7 @@ desafios_2025 <- desafios %>%
 
 rm(list=setdiff(ls(),c("bateu_meta_23","desafios_2023","desafios_2025")))
 
-# Crescimento no SAEGO  (2022-2023) [V] ----
+# Crescimento no SAEGO  (2022-2023) [V] (treino) ----
 
 
 # SAEGO 2022
@@ -369,5 +369,217 @@ names(crescimento_20242025) <- c("EF_LP","EF_MT","EM_LP","EM_MT")
 
 rm(list=setdiff(ls(),c("bateu_meta_23","desafios_2023","desafios_2025","crescimento_20222023","crescimento_20242025")))
 
-# Crescimento Médio maior no IDEB []----
-# Taxa de Aprovação []----
+# Crescimento Médio maior no IDEB (2005 - 2021)[V] (treino) ----
+
+ideb_historico_af_20052021 <- read_excel("Bases/divulgacao_anos_finais_escolas_2023.xlsx", skip = 9) %>% 
+  select("SG_UF","ID_ESCOLA","NO_ESCOLA","REDE", starts_with("VL_OBSERVADO")) %>% 
+  select(-VL_OBSERVADO_2023) %>%
+  filter(SG_UF == 'GO',
+         REDE == 'Estadual') %>%
+  mutate(across(starts_with("VL_OBSERVADO"), ~ as.numeric(na_if(., "-"))))
+
+ideb_historico_af_20052021 <- ideb_historico_af_20052021 %>%
+  pivot_longer(
+    cols = starts_with("VL_OBSERVADO"),
+    names_to = "Ano_Texto",
+    values_to = "IDEB"
+  ) %>%
+  mutate(Ano = as.numeric(str_remove(Ano_Texto, "VL_OBSERVADO_"))) %>%
+  filter(!is.na(IDEB))  %>%
+  group_by(ID_ESCOLA, NO_ESCOLA) %>%
+  filter(n() >= 2) %>%
+  summarise(
+    Crescimento_Medio_Anual = coef(lm(IDEB ~ Ano))[2],
+    .groups = "drop"
+  )
+
+
+ideb_historico_em_20052021 <- read_excel("Bases/divulgacao_ensino_medio_escolas_2023.xlsx",skip = 9) %>% 
+  select("SG_UF","ID_ESCOLA","NO_ESCOLA","REDE", starts_with("VL_OBSERVADO")) %>% 
+  select(-VL_OBSERVADO_2023) %>%
+  filter(SG_UF == 'GO',
+         REDE == 'Estadual') %>%
+  mutate(across(starts_with("VL_OBSERVADO"), ~ as.numeric(na_if(., "-"))))
+
+ideb_historico_em_20052021 <- ideb_historico_em_20052021 %>%
+  pivot_longer(
+    cols = starts_with("VL_OBSERVADO"),
+    names_to = "Ano_Texto",
+    values_to = "IDEB"
+  ) %>%
+  mutate(Ano = as.numeric(str_remove(Ano_Texto, "VL_OBSERVADO_"))) %>%
+  filter(!is.na(IDEB))  %>%
+  group_by(ID_ESCOLA, NO_ESCOLA) %>%
+  filter(n() >= 2) %>%
+  summarise(
+    Crescimento_Medio_Anual = coef(lm(IDEB ~ Ano))[2],
+    .groups = "drop"
+  )
+
+
+rm(list=setdiff(ls(),c("bateu_meta_23",
+                       "desafios_2023","desafios_2025",
+                       "crescimento_20222023","crescimento_20242025",
+                       "ideb_historico_af_20052021","ideb_historico_em_20052021")))
+
+
+# Crescimento Médio maior no IDEB (2005 - 2023)[V]----
+
+ideb_historico_af_20052023 <- read_excel("Bases/divulgacao_anos_finais_escolas_2023.xlsx", skip = 9) %>% 
+  select("SG_UF","ID_ESCOLA","NO_ESCOLA","REDE", starts_with("VL_OBSERVADO")) %>% 
+  filter(SG_UF == 'GO',
+         REDE == 'Estadual') %>%
+  mutate(across(starts_with("VL_OBSERVADO"), ~ as.numeric(na_if(., "-"))))
+
+ideb_historico_af_20052023 <- ideb_historico_af_20052023 %>%
+  pivot_longer(
+    cols = starts_with("VL_OBSERVADO"),
+    names_to = "Ano_Texto",
+    values_to = "IDEB"
+  ) %>%
+  mutate(Ano = as.numeric(str_remove(Ano_Texto, "VL_OBSERVADO_"))) %>%
+  filter(!is.na(IDEB))  %>%
+  group_by(ID_ESCOLA, NO_ESCOLA) %>%
+  filter(n() >= 2) %>%
+  summarise(
+    Crescimento_Medio_Anual = coef(lm(IDEB ~ Ano))[2],
+    .groups = "drop"
+  )
+
+
+ideb_historico_em_20052023 <- read_excel("Bases/divulgacao_ensino_medio_escolas_2023.xlsx",skip = 9) %>% 
+  select("SG_UF","ID_ESCOLA","NO_ESCOLA","REDE", starts_with("VL_OBSERVADO")) %>% 
+  filter(SG_UF == 'GO',
+         REDE == 'Estadual') %>%
+  mutate(across(starts_with("VL_OBSERVADO"), ~ as.numeric(na_if(., "-"))))
+
+ideb_historico_em_20052023 <- ideb_historico_em_20052023 %>%
+  pivot_longer(
+    cols = starts_with("VL_OBSERVADO"),
+    names_to = "Ano_Texto",
+    values_to = "IDEB"
+  ) %>%
+  mutate(Ano = as.numeric(str_remove(Ano_Texto, "VL_OBSERVADO_"))) %>%
+  filter(!is.na(IDEB))  %>%
+  group_by(ID_ESCOLA, NO_ESCOLA) %>%
+  filter(n() >= 2) %>%
+  summarise(
+    Crescimento_Medio_Anual = coef(lm(IDEB ~ Ano))[2],
+    .groups = "drop"
+  )
+
+rm(list=setdiff(ls(),c("bateu_meta_23",
+                       "desafios_2023","desafios_2025",
+                       "crescimento_20222023","crescimento_20242025",
+                       "ideb_historico_af_20052021","ideb_historico_em_20052021",
+                       "ideb_historico_af_20052023","ideb_historico_em_20052023")))
+
+
+# Taxa de Aprovação (2021) [V] (treino) ----
+
+tx_21_ef <- read_excel("Bases/divulgacao_anos_finais_escolas_2023.xlsx", skip = 9) %>% 
+  select("SG_UF","ID_ESCOLA","NO_ESCOLA","REDE", "VL_INDICADOR_REND_2021") %>% 
+  filter(SG_UF == 'GO',
+         REDE == 'Estadual') %>%
+  mutate(VL_INDICADOR_REND_2021 = as.numeric(case_when(VL_INDICADOR_REND_2021 == "-" ~ NA_character_, TRUE ~ VL_INDICADOR_REND_2021)))
+
+
+tx_21_em <- read_excel("Bases/divulgacao_ensino_medio_escolas_2023.xlsx",skip = 9) %>%
+  select("SG_UF","ID_ESCOLA","NO_ESCOLA","REDE", "VL_INDICADOR_REND_2021") %>% 
+  filter(SG_UF == 'GO',
+         REDE == 'Estadual') %>%
+  mutate(VL_INDICADOR_REND_2021 = as.numeric(case_when(VL_INDICADOR_REND_2021 == "-" ~ NA_character_, TRUE ~ VL_INDICADOR_REND_2021)))
+
+rm(list=setdiff(ls(),c("bateu_meta_23",
+                       "desafios_2023","desafios_2025",
+                       "crescimento_20222023","crescimento_20242025",
+                       "ideb_historico_af_20052021","ideb_historico_em_20052021",
+                       "ideb_historico_af_20052023","ideb_historico_em_20052023",
+                       "tx_21_ef","tx_21_em")))
+
+
+
+# Taxa de Aprovação (2023) [V]----
+
+tx_23_ef <- read_excel("Bases/divulgacao_anos_finais_escolas_2023.xlsx", skip = 9) %>% 
+  select("SG_UF","ID_ESCOLA","NO_ESCOLA","REDE", "VL_INDICADOR_REND_2023") %>% 
+  filter(SG_UF == 'GO',
+         REDE == 'Estadual') %>%
+  mutate(VL_INDICADOR_REND_2023 = as.numeric(case_when(VL_INDICADOR_REND_2023 == "-" ~ NA_character_, TRUE ~ VL_INDICADOR_REND_2023)))
+
+
+tx_23_em <- read_excel("Bases/divulgacao_ensino_medio_escolas_2023.xlsx",skip = 9) %>%
+  select("SG_UF","ID_ESCOLA","NO_ESCOLA","REDE", "VL_INDICADOR_REND_2023") %>% 
+  filter(SG_UF == 'GO',
+         REDE == 'Estadual') %>%
+  mutate(VL_INDICADOR_REND_2023 = as.numeric(case_when(VL_INDICADOR_REND_2023 == "-" ~ NA_character_, TRUE ~ VL_INDICADOR_REND_2023)))
+
+rm(list=setdiff(ls(),c("bateu_meta_23",
+                       "desafios_2023","desafios_2025",
+                       "crescimento_20222023","crescimento_20242025",
+                       "ideb_historico_af_20052021","ideb_historico_em_20052021",
+                       "ideb_historico_af_20052023","ideb_historico_em_20052023",
+                       "tx_21_ef","tx_21_em",
+                       "tx_23_ef","tx_23_em")))
+
+
+# ===========================
+# ====== MONTANDO AS BASES ==
+# ===========================
+
+# DADOS TREINO ----
+
+# ENSINO FUNDAMENTAL ANOS FINAIS ----
+dados_treino_ef <- bateu_meta_23 %>% select(`Código da Escola`,`Atingiu a Meta\r\nAnos Finais`) %>%
+  left_join(desafios_2023 %>% select(`Código da Escola`,Desafio_AF_menor),by="Código da Escola") %>%
+  left_join(crescimento_20222023[["EF_LP"]] %>% select(`Código Escola`,Crescimento) %>% rename(Crescimento_LP = Crescimento) %>% mutate(`Código Escola` = as.double(`Código Escola`)),
+            by=c("Código da Escola" = "Código Escola")) %>%
+  left_join(crescimento_20222023[["EF_MT"]] %>% select(`Código Escola`,Crescimento) %>% rename(Crescimento_MT = Crescimento) %>% mutate(`Código Escola` = as.double(`Código Escola`)),
+            by=c("Código da Escola" = "Código Escola")) %>%
+  left_join(ideb_historico_af_20052021 %>% select(ID_ESCOLA,Crescimento_Medio_Anual),by=c("Código da Escola" = "ID_ESCOLA")) %>%
+  left_join(tx_21_ef %>% select(ID_ESCOLA,VL_INDICADOR_REND_2021) %>% rename(IP = VL_INDICADOR_REND_2021), by=c("Código da Escola" = "ID_ESCOLA"))
+  
+# ENSINO MEDIO ----
+dados_treino_em <- bateu_meta_23 %>% select(`Código da Escola`,`Atingiu a Meta\r\nEnsino Médio`) %>%
+  left_join(desafios_2023 %>% select(`Código da Escola`,Desafio_EM_menor),by="Código da Escola") %>%
+  left_join(crescimento_20222023[["EM_LP"]] %>% select(`Código Escola`,Crescimento) %>% rename(Crescimento_LP = Crescimento) %>% mutate(`Código Escola` = as.double(`Código Escola`)),
+            by=c("Código da Escola" = "Código Escola")) %>%
+  left_join(crescimento_20222023[["EM_MT"]] %>% select(`Código Escola`,Crescimento) %>% rename(Crescimento_MT = Crescimento) %>% mutate(`Código Escola` = as.double(`Código Escola`)),
+            by=c("Código da Escola" = "Código Escola")) %>%
+  left_join(ideb_historico_em_20052021 %>% select(ID_ESCOLA,Crescimento_Medio_Anual),by=c("Código da Escola" = "ID_ESCOLA")) %>%
+  left_join(tx_21_em %>% select(ID_ESCOLA,VL_INDICADOR_REND_2021) %>% rename(IP = VL_INDICADOR_REND_2021), by=c("Código da Escola" = "ID_ESCOLA"))
+
+
+# DADOS TESTE ----
+
+# ENSINO FUNDAMENTAL ANOS FINAIS ----
+dados_teste_ef <- desafios_2025 %>% select(Cod_Inep,Desafio_AF_menor) %>%
+  left_join(crescimento_20242025[["EF_LP"]] %>% select(`Código da escola`,Crescimento) %>% rename(Crescimento_LP = Crescimento) %>% mutate(`Código da escola` = as.double(`Código da escola`)),
+            by=c("Cod_Inep" = "Código da escola")) %>%
+  left_join(crescimento_20242025[["EF_MT"]] %>% select(`Código da escola`,Crescimento) %>% rename(Crescimento_MT = Crescimento) %>% mutate(`Código da escola` = as.double(`Código da escola`)),
+            by=c("Cod_Inep" = "Código da escola")) %>%
+  left_join(ideb_historico_af_20052023 %>% select(ID_ESCOLA,Crescimento_Medio_Anual),by=c("Cod_Inep" = "ID_ESCOLA")) %>%
+  left_join(tx_23_ef %>% select(ID_ESCOLA,VL_INDICADOR_REND_2023) %>% rename(IP = VL_INDICADOR_REND_2023), by=c("Cod_Inep" = "ID_ESCOLA"))
+
+# ENSINO MÉDIO ----
+dados_teste_em <- desafios_2025 %>% select(Cod_Inep,Desafio_EM_menor) %>%
+  left_join(crescimento_20242025[["EM_LP"]] %>% select(`Código da escola`,Crescimento) %>% rename(Crescimento_LP = Crescimento) %>% mutate(`Código da escola` = as.double(`Código da escola`)),
+            by=c("Cod_Inep" = "Código da escola")) %>%
+  left_join(crescimento_20242025[["EM_MT"]] %>% select(`Código da escola`,Crescimento) %>% rename(Crescimento_MT = Crescimento) %>% mutate(`Código da escola` = as.double(`Código da escola`)),
+            by=c("Cod_Inep" = "Código da escola")) %>%
+  left_join(ideb_historico_em_20052023 %>% select(ID_ESCOLA,Crescimento_Medio_Anual),by=c("Cod_Inep" = "ID_ESCOLA")) %>%
+  left_join(tx_23_em %>% select(ID_ESCOLA,VL_INDICADOR_REND_2023) %>% rename(IP = VL_INDICADOR_REND_2023), by=c("Cod_Inep" = "ID_ESCOLA"))
+
+
+# Renomeando ----
+
+
+names(dados_treino_ef) <- c("CD_ESCOLA","Y","DESAFIO_AF_MENOR","CRESCIMENTO_LP","CRESCIMENTO_MT","CRESCIMENTO_MEDIO_ANUAL_IDEB","IP")
+names(dados_teste_ef) <- c("CD_ESCOLA","DESAFIO_AF_MENOR","CRESCIMENTO_LP","CRESCIMENTO_MT","CRESCIMENTO_MEDIO_ANUAL_IDEB","IP")
+
+names(dados_treino_em) <- c("CD_ESCOLA","Y","DESAFIO_EM_MENOR","CRESCIMENTO_LP","CRESCIMENTO_MT","CRESCIMENTO_MEDIO_ANUAL_IDEB","IP")
+names(dados_teste_em) <- c("CD_ESCOLA","DESAFIO_EM_MENOR","CRESCIMENTO_LP","CRESCIMENTO_MT","CRESCIMENTO_MEDIO_ANUAL_IDEB","IP")
+
+rm(list=setdiff(ls(),c("dados_treino_ef","dados_teste_ef","dados_treino_em","dados_teste_em")))
+
+save.image("bases_para_modelagem.RData")
